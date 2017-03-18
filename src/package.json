@@ -1,20 +1,28 @@
 {
-  "name": "skill-sample-nodejs-calendar-reader",
+  "name": "whats-for-dinner",
   "version": "1.0.0",
-  "description": "A simple calendar reading skill.",
+  "description": "Alexa skill where you can find out what for dinner.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mikesae/whats-for-dinner.git"
+  },
   "keywords": [
     "alexa",
-    "skill",
-    "fact"
+    "dinner",
+    "node.js"
   ],
-  "author": "Amazon.com",
-  "license": "Apache-2.0",
+  "author": "Michael Saelens",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mikesae/whats-for-dinner/issues"
+  },
+  "homepage": "https://github.com/mikesae/whats-for-dinner",
   "dependencies": {
-    "alexa-sdk": "^1.0.0",
+    "alexa-sdk": "^1.0.7",
     "ical": "^0.5.0"
   }
 }

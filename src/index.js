@@ -11,53 +11,53 @@ var states = {
 var alexa;
 
 //OPTIONAL: replace with "amzn1.ask.skill.[your-unique-value-here]";
-var APP_ID = undefined; 
+var APP_ID = "amzn1.ask.skill.cb3698a7-00e6-46ac-a136-16f357e59541";
 
-// URL to get the .ics from, in this instance we are getting from Stanford however this can be changed
-var URL = "http://events.stanford.edu/eventlist.ics";
+// URL to get the .ics from
+var URL = "https://calendar.google.com/calendar/ical/ia0ttobe2lkaaii29h3lghtobk%40group.calendar.google.com/private-65fc910066b6732f90e05878ec763bc2/basic.ics";
 
 // Skills name 
-var skillName = "Events calendar:";
+var skillName = "Chef";
 
 // Message when the skill is first called
-var welcomeMessage = "You can ask for the events today. Search for events by date. or say help. What would you like? ";
+var welcomeMessage = "You can ask chef whats for dinner. Search for dinner by day, or say help. What would you like? ";
 
 // Message for help intent
-var HelpMessage = "Here are some things you can say: Is there an event today? Is there an event on the 18th of July? What are the events next week? Are there any events tomorrow?  What would you like to know?";
+var HelpMessage = "Here are some things you can say: What's for dinner? What's for dinner on Friday? What for dinner this week? What's for dinner tomorrow?  What would you like to know?";
 
-var descriptionStateHelpMessage = "Here are some things you can say: Tell me about event one";
+var descriptionStateHelpMessage = "Here are some things you can say: Tell me about dinner tonight";
 
 // Used when there is no data within a time period
-var NoDataMessage = "Sorry there aren't any events scheduled. Would you like to search again?";
+var NoDataMessage = "Sorry there no dinner planned for then. Would you like to search again?";
 
 // Used to tell user skill is closing
 var shutdownMessage = "Ok see you again soon.";
 
 // Message used when only 1 event is found allowing for difference in punctuation 
-var oneEventMessage = "There is 1 event ";
+var oneEventMessage = "There is 1 dinner ";
 
 // Message used when more than 1 event is found allowing for difference in punctuation 
-var multipleEventMessage = "There are %d events ";
+var multipleEventMessage = "There are %d dinners ";
 
 // text used after the number of events has been said
-var scheduledEventMessage = "scheduled for this time frame. I've sent the details to your Alexa app: ";
+var scheduledEventMessage = "planned for this time frame. I've sent the details to your Alexa app: ";
 
 var firstThreeMessage = "Here are the first %d. ";
 
 // the values within the {} are swapped out for variables
-var eventSummary = "The %s event is, %s at %s on %s ";
+var eventSummary = "The %s dinner is, %s at %s on %s ";
 
 // Only used for the card on the companion app
 var cardContentSummary = "%s at %s on %s ";
 
 // More info text
-var haveEventsRepromt = "Give me an event number to hear more information.";
+var haveEventsRepromt = "Give me a dinner number to hear more information.";
 
 // Error if a date is out of range
 var dateOutOfRange = "Date is out of range please choose another date";
 
 // Error if a event number is out of range
-var eventOutOfRange = "Event number is out of range please choose another event";
+var eventOutOfRange = "Dinner number is out of range please choose another event";
 
 // Used when an event is asked for
 var descriptionMessage = "Here's the description ";
@@ -65,10 +65,10 @@ var descriptionMessage = "Here's the description ";
 // Used when an event is asked for
 var killSkillMessage = "Ok, great, see you next time.";
 
-var eventNumberMoreInfoText = "You can say the event number for more information.";
+var eventNumberMoreInfoText = "You can say the dinner number for more information.";
 
 // used for title on companion app
-var cardTitle = "Events";
+var cardTitle = "Chef";
 
 // output for Alexa
 var output = "";
@@ -139,7 +139,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
                     // Check we have both a start and end date
                     if (eventDate.startDate && eventDate.endDate) {
                         // initiate a new array, and this time fill it with events that fit between the two dates
-                        relevantEvents = getEventsBeweenDates(eventDate.startDate, eventDate.endDate, eventList);
+                        relevantEvents = getEventsBetweenDates(eventDate.startDate, eventDate.endDate, eventList);
 
                         if (relevantEvents.length > 0) {
                             // change state to description
@@ -194,7 +194,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
             });
         }
         else{
-            this.emit(":ask", "I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?");
+            this.emit(":ask", "I'm sorry.  What day did you want me to look for dinner?", "I'm sorry.  What day did you want me to look for dinner?");
         }
     },
 
@@ -224,7 +224,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
     'eventIntent': function () {
 
-        var repromt = " Would you like to hear another event?";
+        var reprompt = " Would you like to hear another dinner?";
         var slotValue = this.event.request.intent.slots.number.value;
 
         // parse slot value
@@ -235,9 +235,9 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
             // use the slot value as an index to retrieve description from our relevant array
             output = descriptionMessage + removeTags(relevantEvents[index].description);
 
-            output += repromt;
+            output += reprompt;
 
-            this.emit(':askWithCard', output, repromt, relevantEvents[index].summary, output);
+            this.emit(':askWithCard', output, reprompt, relevantEvents[index].summary, output);
         } else {
             this.emit(':tell', eventOutOfRange);
         }
@@ -377,7 +377,7 @@ var w2date = function (year, wn, dayNb) {
 };
 
 // Loops though the events from the iCal data, and checks which ones are between our start data and out end date
-function getEventsBeweenDates(startDate, endDate, eventList) {
+function getEventsBetweenDates(startDate, endDate, eventList) {
 
     var start = new Date(startDate);
     var end = new Date(endDate);
@@ -390,7 +390,7 @@ function getEventsBeweenDates(startDate, endDate, eventList) {
         }
     }
 
-    console.log("FOUND " + data.length + " events between those times");
+    console.log("FOUND " + data.length + " dinners between those times.");
     return data;
 }
 
