@@ -1,5 +1,4 @@
 searchIntent whats for dinner
-searchIntent whats for dinner tonight
+searchIntent whats for dinner {day}
+searchIntent whats for dinner {day} night
 searchIntent whats for dinner on {day}
-searchIntent whats for dinner tomorrow
-searchIntent whats for dinner tomorrow night

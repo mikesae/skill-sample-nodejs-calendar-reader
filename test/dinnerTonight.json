@@ -1,0 +1,29 @@
+{
+  "session": {
+    "sessionId": "SessionId.ea73339f-8cd4-4558-a576-7dbd844c74e3",
+    "application": {
+      "applicationId": "demo id"
+    },
+    "attributes": {},
+    "user": {
+      "userId": "amzn1.ask.account.AFP3ZWPOS2BGJR7OWJZ3DHPKMOMOGM5RFPEIGKPGBBJRSUSTVR4BMVUM7GFZNZT4GIX44LJQRSREZ7RPGB6LGW7LO7XZWERAC5IX3AZOCH56QSN254UQ6WANENADFSYR633N4Z55OE6IR7TUB5RPB5JDZ4GRBKOMBSJPDSQBY7MW7OYZBG5FXGDJRX7SQPPM652RCPTPUBMVCSA"
+    },
+    "new": true
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "EdwRequestId.12ab5be8-fc42-4bf5-a13b-fcde0ea7f4ed",
+    "locale": "en-US",
+    "timestamp": "2017-03-21T15:35:03Z",
+    "intent": {
+      "name": "TonightDinnerIntent",
+      "slots": {
+        "number": {
+          "name": "day",
+          "value": "tonight"
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
