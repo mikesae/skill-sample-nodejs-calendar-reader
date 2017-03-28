@@ -11,7 +11,6 @@ var states = {
 // local variable holding reference to the Alexa SDK object
 var alexa;
 
-//OPTIONAL: replace with "amzn1.ask.skill.[your-unique-value-here]";
 var APP_ID = "amzn1.ask.skill.cb3698a7-00e6-46ac-a136-16f357e59541";
 
 // URL to get the .ics from
@@ -52,7 +51,7 @@ var eventSummary = "The %s dinner is, %s at %s on %s ";
 var cardContentSummary = "%s at %s on %s ";
 
 // More info text
-var haveEventsRepromt = "Give me a dinner number to hear more information.";
+var haveEventsReprompt = "Give me a dinner number to hear more information.";
 
 // Error if a date is out of range
 var dateOutOfRange = "Date is out of range please choose another date";
@@ -113,6 +112,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
         var eventList = [];
         var slotValue = this.event.request.intent.slots.day.value;
         var date;
+        var eventDate;
+
         if (slotValue != undefined)
         {
             var parent = this;
@@ -138,8 +139,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
                 // Check we have data
                 if (eventList.length > 0) {
                     // Read slot data and parse out a usable date
-                    var eventDate = getDateFromDaySlot(slotValue);
-                    // Check we have both a start and end date
+                    eventDate = getDateFromDaySlot(slotValue);
+
                     if (eventDate) {
                         // initiate a new array, and this time fill it with events that fit between the two dates
                         relevantEvents = getEventOnDate(eventDate, eventList);
@@ -180,7 +181,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
                             }
 
                             output += eventNumberMoreInfoText;
-                            alexa.emit(':askWithCard', output, haveEventsRepromt, cardTitle, cardContent);
+                            alexa.emit(':askWithCard', output, haveEventsReprompt, cardTitle, cardContent);
                         } else {
                             output = NoDataMessage;
                             alexa.emit(':ask', output, output);
@@ -413,15 +414,12 @@ var w2date = function (year, wn, dayNb) {
 };
 
 function getEventOnDate(date, events) {
-    var result;
+    var results = [];
 
     for (var i = 0; i < events.length; i += 1) {
         if (date >= events[i].start && date <= events[i].end) {
-            result = events[i];
+            results.push(events[i]);
         }
     }
-    return result;
+    return results;
 }
-
-
-

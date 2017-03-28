@@ -15,31 +15,31 @@
 // the role must have a trusted policy with
 // "lambda.amazonaws.com" and "arn:aws:iam::<YOUR ACCOUNT ID>:user/<YOUR USER>"
 
-var roleArn = 'arn:aws:iam::<YOUR AWS ACCOUNT ID>:role/lambda_dynamo';
+var roleArn = 'arn:aws:iam::032430384708:role/lambda_dynamo';
 var region = 'us-east-1';
 /* DO NOT MAKE CHANGE BELOW THIS */
 var aws = require('aws-sdk');
 
 function context() {
     'use strict';
-    var context = require('./context.json');
-    context.done = function (error, result) {
+    var localContext = require('./context.json');
+    localContext.done = function (error, result) {
         console.log('context.done');
         console.log(error);
         console.log(result);
         process.exit();
-    }
-    context.succeed = function (result) {
+    };
+    localContext.succeed = function (result) {
         console.log('context.succeed');
         console.log(result);
         process.exit();
-    }
-    context.fail = function (error) {
+    };
+    localContext.fail = function (error) {
         console.log('context.fail');
         console.log(error);
         process.exit();
-    }
-    return context;
+    };
+    return localContext;
 }
 aws.config.region = region;
 var sts = new aws.STS();
@@ -47,6 +47,8 @@ sts.assumeRole({
     RoleArn: roleArn,
     RoleSessionName: 'emulambda'
 }, function (err, data) {
+    'use strict';
+
     if (err) { // an error occurred
         console.log('Cannot assume role');
         console.log(err, err.stack);
