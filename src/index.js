@@ -28,21 +28,17 @@ var HelpMessage = "Here are some things you can say: What's for dinner? What's f
 var descriptionStateHelpMessage = "Here are some things you can say: Tell me about dinner tonight";
 
 // Used when there is no data within a time period
-var NoDataMessage = "Sorry there no dinner planned for then. Would you like to search again?";
+var NoDataMessage = "Sorry there is no dinner planned for then. Would you like to search again?";
 
 // Used to tell user skill is closing
 var shutdownMessage = "Ok see you again soon.";
 
 // Message used when only 1 event is found allowing for difference in punctuation
-var oneEventMessage = "There is 1 dinner ";
-
-// Message used when more than 1 event is found allowing for difference in punctuation
-var multipleEventMessage = "There are %d dinners ";
+var eventMessage = "%s is being served %s";
+var eventOnMessage = "%s is being served on %s";
 
 // text used after the number of events has been said
-var scheduledEventMessage = "planned for this time frame. I've sent the details to your Alexa app: ";
-
-var firstThreeMessage = "Here are the first %d. ";
+var scheduledEventMessage = "I've sent the details to your Alexa app: ";
 
 // the values within the {} are swapped out for variables
 var eventSummary = "The %s dinner is, %s at %s on %s ";
@@ -73,8 +69,8 @@ var cardTitle = "Chef";
 // output for Alexa
 var output = "";
 
-// stores events that are found to be in our date range
-var relevantEvents = [];
+// stores event that is found to be in our date range
+var relevantEvent = {};
 
 // Adding session handlers
 var newSessionHandlers = {
@@ -110,7 +106,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
     'searchIntent': function () {
         // Declare variables
         var eventList = [];
-        var slotValue = this.event.request.intent.slots.day.value;
+        var slotValue = this.event.request.intent.slots.day.value.toLowerCase();
         var date;
         var eventDate;
 
@@ -143,44 +139,26 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 
                     if (eventDate) {
                         // initiate a new array, and this time fill it with events that fit between the two dates
-                        relevantEvents = getEventOnDate(eventDate, eventList);
+                        relevantEvent = getEventOnDate(eventDate, eventList);
 
-                        if (relevantEvents.length > 0) {
+                        if (relevantEvent) {
                             // change state to description
                             parent.handler.state = states.DESCRIPTION;
 
                             // Create output for both Alexa and the content card
                             var cardContent = "";
-                            output = oneEventMessage;
-                            if (relevantEvents.length > 1) {
-                                output = utils.format(multipleEventMessage, relevantEvents.length);
+                            if (slotValue == 'today' || slotValue == 'tomorrow' || slotValue == 'tonight') {
+                                output = utils.format(eventMessage, removeTags(relevantEvent.summary), slotValue);
+                            } else {
+                                output = utils.format(eventOnMessage, removeTags(relevantEvent.summary), slotValue);
                             }
+                            //output += scheduledEventMessage;
 
-                            output += scheduledEventMessage;
+                            date = new Date(relevantEvent.start);
+                            // output += utils.format(eventSummary, "First", removeTags(relevantEvent.summary), relevantEvent.location, date.toDateString() + ".");
+                            // cardContent += utils.format(cardContentSummary, removeTags(relevantEvent.summary), removeTags(relevantEvent.location), date.toDateString()+ "\n\n");
 
-                            if (relevantEvents.length > 1) {
-                                output += utils.format(firstThreeMessage, relevantEvents.length > 3 ? 3 : relevantEvents.length);
-                            }
-
-                            if (relevantEvents[0] != null) {
-                                date = new Date(relevantEvents[0].start);
-                                output += utils.format(eventSummary, "First", removeTags(relevantEvents[0].summary), relevantEvents[0].location, date.toDateString() + ".");
-                            }
-                            if (relevantEvents[1]) {
-                                date = new Date(relevantEvents[1].start);
-                                output += utils.format(eventSummary, "Second", removeTags(relevantEvents[1].summary), relevantEvents[1].location, date.toDateString() + ".");
-                            }
-                            if (relevantEvents[2]) {
-                                date = new Date(relevantEvents[2].start);
-                                output += utils.format(eventSummary, "Third", removeTags(relevantEvents[2].summary), relevantEvents[2].location, date.toDateString() + ".");
-                            }
-
-                            for (var i = 0; i < relevantEvents.length; i++) {
-                                date = new Date(relevantEvents[i].start);
-                                cardContent += utils.format(cardContentSummary, removeTags(relevantEvents[i].summary), removeTags(relevantEvents[i].location), date.toDateString()+ "\n\n");
-                            }
-
-                            output += eventNumberMoreInfoText;
+                            //output += eventNumberMoreInfoText;
                             alexa.emit(':askWithCard', output, haveEventsReprompt, cardTitle, cardContent);
                         } else {
                             output = NoDataMessage;
@@ -228,20 +206,13 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
     'eventIntent': function () {
 
-        var reprompt = " Would you like to hear another dinner?";
-        var slotValue = this.event.request.intent.slots.number.value;
+        var reprompt = " Would you like to hear more details?";
 
-        // parse slot value
-        var index = parseInt(slotValue) - 1;
-
-        if (relevantEvents[index]) {
-
+        if (relevantEvent) {
             // use the slot value as an index to retrieve description from our relevant array
-            output = descriptionMessage + removeTags(relevantEvents[index].description);
-
+            output = descriptionMessage + removeTags(relevantEvent.description);
             output += reprompt;
-
-            this.emit(':askWithCard', output, reprompt, relevantEvents[index].summary, output);
+            this.emit(':askWithCard', output, reprompt, relevantEvent.summary, output);
         } else {
             this.emit(':tell', eventOutOfRange);
         }
@@ -330,24 +301,23 @@ function getDateFromSlot(rawDate) {
     return eventDate;
 }
 
-var dayMap = [
-    { monday: 0 },
-    { tuesday: 1 },
-    { wednesday: 2 },
-    { thursday: 3 },
-    { friday: 4 },
-    { saturday: 5 },
-    { sunday: 6 }
-];
+var dayMap = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6
+};
 
-function getDateFromDaySlot(rawDay) {
-    var requestedDayName =rawDay.toLowerCase();
+function getDateFromDaySlot(requestedDayName) {
     var now = moment();
     var currentDay = now.day();
     var requestedDay;
     var result;
 
-    if (dayMap[requestedDayName]) {
+    if (dayMap[requestedDayName] !== undefined) {
         requestedDay = dayMap[requestedDayName];
         result = now.add(requestedDay - currentDay, 'd');
     } else {
@@ -414,12 +384,13 @@ var w2date = function (year, wn, dayNb) {
 };
 
 function getEventOnDate(date, events) {
-    var results = [];
+    var result = null;
 
     for (var i = 0; i < events.length; i += 1) {
         if (date >= events[i].start && date <= events[i].end) {
-            results.push(events[i]);
+            result = events[i];
+            break;
         }
     }
-    return results;
+    return result;
 }
