@@ -19,7 +19,8 @@
       "name": "searchIntent",
       "slots": {
         "day": {
-          "name": "date"
+          "name": "date",
+          "value": "sunday"
         }
       }
     }

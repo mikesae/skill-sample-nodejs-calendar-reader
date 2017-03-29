@@ -2,3 +2,6 @@ searchIntent whats for dinner
 searchIntent whats for dinner {day}
 searchIntent whats for dinner {day} night
 searchIntent whats for dinner on {day}
+searchIntent what was for dinner {day}
+searchIntent what was for dinner {day} night
+searchIntent what was for dinner on {day}

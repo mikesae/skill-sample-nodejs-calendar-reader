@@ -3,6 +3,10 @@ var ical = require('ical');
 var http = require('http');
 var utils = require('util');
 var moment = require('moment');
+var natural = require('natural');
+var _ = require('underscore');
+
+var tokenizer = new natural.WordTokenizer();
 
 var states = {
     SEARCHMODE: '_SEARCHMODE',
@@ -33,15 +37,8 @@ var NoDataMessage = "Sorry there is no dinner planned for then. Would you like t
 // Used to tell user skill is closing
 var shutdownMessage = "Ok see you again soon.";
 
-// Message used when only 1 event is found allowing for difference in punctuation
-var eventMessage = "%s is being served %s";
-var eventOnMessage = "%s is being served on %s";
-
 // More info text
-var haveEventsReprompt = "Give me a dinner number to hear more information.";
-
-// Error if a date is out of range
-var dateOutOfRange = "Date is out of range please choose another date";
+var haveEventsReprompt = "Would you like to know more";
 
 // Error if a event number is out of range
 var eventOutOfRange = "Dinner number is out of range please choose another event";
@@ -78,6 +75,35 @@ var newSessionHandlers = {
     }
 };
 
+const getEventMessage = (day, summary) => {
+    var result = "";
+    var words = tokenizer.tokenize(summary.toLowerCase());
+    var isPlural = _.contains(words, "and") || _.contains(words, "leftovers");
+    var pluralPresent = isPlural ? "are" : "is";
+    var pluralPast = isPlural ? "were" : "was";
+
+    switch (day) {
+        case 'monday':
+        case 'tuesday':
+        case 'wednesday':
+        case 'thursday':
+        case 'friday':
+        case 'saturday':
+        case 'sunday':
+            result = utils.format("%s %s being served on %s", summary, pluralPresent, day);
+            break;
+        case 'today':
+        case 'tomorrow':
+        case 'tonight':
+            result = utils.format("%s %s being served %s", summary, pluralPresent, day);
+            break;
+        case 'yesterday':
+            result = utils.format("%s %s served yesterday", summary, pluralPast);
+            break;
+    }
+    return result;
+};
+
 // Create a new handler with a SEARCH state
 var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
     'AMAZON.YesIntent': function () {
@@ -93,20 +119,16 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
         this.emit(':ask', output, HelpMessage);
     },
 
-    'searchIntent': function () {
-        // Declare variables
+    searchIntent: function () {
         var eventList = [];
         var slotValue = this.event.request.intent.slots.day.value;
-        var date;
         var eventDate;
+        var parent = this;
 
         slotValue = slotValue ? slotValue.toLowerCase() : 'tonight';
 
-        var parent = this;
-
         // Using the iCal library I pass the URL of where we want to get the data from.
         ical.fromURL(URL, {}, function (err, data) {
-            // Loop through all iCal data found
             for (var k in data) {
                 if (data.hasOwnProperty(k)) {
                     var ev = data[k];
@@ -137,11 +159,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 
                         // Create output for both Alexa and the content card
                         var cardContent = "";
-                        if (slotValue == 'today' || slotValue == 'tomorrow' || slotValue == 'tonight') {
-                            output = utils.format(eventMessage, removeTags(relevantEvent.summary), slotValue);
-                        } else {
-                            output = utils.format(eventOnMessage, removeTags(relevantEvent.summary), slotValue);
-                        }
+                        output = getEventMessage(slotValue, removeTags(relevantEvent.summary));
                         alexa.emit(':askWithCard', output, haveEventsReprompt, cardTitle, cardContent);
                     } else {
                         output = NoDataMessage;
@@ -184,7 +202,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
     'eventIntent': function () {
 
-        var reprompt = " Would you like to hear more details?";
+        var reprompt = "Would you like to hear more details?";
 
         if (relevantEvent) {
             // use the slot value as an index to retrieve description from our relevant array
@@ -242,43 +260,6 @@ function removeTags(str) {
     }
 }
 
-// Given an AMAZON.DATE slot value parse out to usable JavaScript Date object
-// Utterances that map to the weekend for a specific week (such as "this weekend") convert to a date indicating the week number and weekend: 2015-W49-WE.
-// Utterances that map to a month, but not a specific day (such as "next month", or "December") convert to a date with just the year and month: 2015-12.
-// Utterances that map to a year (such as "next year") convert to a date containing just the year: 2016.
-// Utterances that map to a decade convert to a date indicating the decade: 201X.
-// Utterances that map to a season (such as "next winter") convert to a date with the year and a season indicator: winter: WI, spring: SP, summer: SU, fall: FA)
-function getDateFromSlot(rawDate) {
-    // try to parse data
-    var date = new Date(Date.parse(rawDate));
-    var eventDate = {};
-
-    // if could not parse data must be one of the other formats
-    if (isNaN(date)) {
-        // to find out what type of date this is, we can split it and count how many parts we have see comments above.
-        var res = rawDate.split("-");
-        // if we have 2 bits that include a 'W' week number
-        if (res.length === 2 && res[1].indexOf('W') > -1) {
-            dates = getWeekData(res);
-            eventDate["startDate"] = new Date(dates.startDate);
-            eventDate["endDate"] = new Date(dates.endDate);
-            // if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
-        } else if (res.length === 3) {
-            dates = getWeekendData(res);
-            eventDate["startDate"] = new Date(dates.startDate);
-            eventDate["endDate"] = new Date(dates.endDate);
-            // anything else would be out of range for this skill
-        } else {
-            eventDate["error"] = dateOutOfRange;
-        }
-        // original slot value was parsed correctly
-    } else {
-        eventDate["startDate"] = new Date(date).setUTCHours(0, 0, 0, 0);
-        eventDate["endDate"] = new Date(date).setUTCHours(24, 0, 0, 0);
-    }
-    return eventDate;
-}
-
 var dayMap = {
     sunday: 0,
     monday: 1,
@@ -314,52 +295,6 @@ function getDateFromDaySlot(requestedDayName) {
     }
     return result.toDate();
 }
-
-// Given a week number return the dates for both weekend days
-function getWeekendData(res) {
-    if (res.length === 3) {
-        var saturdayIndex = 5;
-        var sundayIndex = 6;
-        var weekNumber = res[1].substring(1);
-
-        var weekStart = w2date(res[0], weekNumber, saturdayIndex);
-        var weekEnd = w2date(res[0], weekNumber, sundayIndex);
-
-        return {
-            startDate: weekStart,
-            endDate: weekEnd
-        };
-    }
-}
-
-// Given a week number return the dates for both the start date and the end date
-function getWeekData(res) {
-    if (res.length === 2) {
-
-        var mondayIndex = 0;
-        var sundayIndex = 6;
-
-        var weekNumber = res[1].substring(1);
-
-        var weekStart = w2date(res[0], weekNumber, mondayIndex);
-        var weekEnd = w2date(res[0], weekNumber, sundayIndex);
-
-        return {
-            startDate: weekStart,
-            endDate: weekEnd
-        };
-    }
-}
-
-// Used to work out the dates given week numbers
-var w2date = function (year, wn, dayNb) {
-    var day = 86400000;
-
-    var j10 = new Date(year, 0, 10, 12, 0, 0),
-        j4 = new Date(year, 0, 4, 12, 0, 0),
-        mon1 = j4.getTime() - j10.getDay() * day;
-    return new Date(mon1 + ((wn - 1) * 7 + dayNb) * day);
-};
 
 function getEventOnDate(date, events) {
     var result = null;
