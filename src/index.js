@@ -23,9 +23,9 @@ var skillName = "Chef";
 var welcomeMessage = "You can ask chef whats for dinner. Search for dinner by day, or say help. What would you like? ";
 
 // Message for help intent
-var HelpMessage = "Here are some things you can say: What's for dinner? What's for dinner on Friday? What for dinner this week? What's for dinner tomorrow?  What would you like to know?";
+var HelpMessage = "Here are some things you can say: What's for dinner? What's for dinner on Friday? What's for dinner tomorrow?  What would you like to know?";
 
-var descriptionStateHelpMessage = "Here are some things you can say: Tell me about dinner tonight";
+var descriptionStateHelpMessage = "Here are some things you can say: Tell me more about dinner tonight";
 
 // Used when there is no data within a time period
 var NoDataMessage = "Sorry there is no dinner planned for then. Would you like to search again?";
@@ -36,15 +36,6 @@ var shutdownMessage = "Ok see you again soon.";
 // Message used when only 1 event is found allowing for difference in punctuation
 var eventMessage = "%s is being served %s";
 var eventOnMessage = "%s is being served on %s";
-
-// text used after the number of events has been said
-var scheduledEventMessage = "I've sent the details to your Alexa app: ";
-
-// the values within the {} are swapped out for variables
-var eventSummary = "The %s dinner is, %s at %s on %s ";
-
-// Only used for the card on the companion app
-var cardContentSummary = "%s at %s on %s ";
 
 // More info text
 var haveEventsReprompt = "Give me a dinner number to hear more information.";
@@ -78,8 +69,7 @@ var newSessionHandlers = {
         this.handler.state = states.SEARCHMODE;
         this.emit(':ask', skillName + " " + welcomeMessage, welcomeMessage);
     },
-    "searchIntent": function()
-    {
+    "searchIntent": function () {
         this.handler.state = states.SEARCHMODE;
         this.emitWithState("searchIntent");
     },
@@ -106,66 +96,54 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
     'searchIntent': function () {
         // Declare variables
         var eventList = [];
-        var slotValue = this.event.request.intent.slots.day.value.toLowerCase();
+        var slotValue = this.event.request.intent.slots.day.value;
         var date;
         var eventDate;
 
-        if (slotValue != undefined)
-        {
-            var parent = this;
+        slotValue = slotValue ? slotValue.toLowerCase() : 'tonight';
 
-            // Using the iCal library I pass the URL of where we want to get the data from.
-            ical.fromURL(URL, {}, function (err, data) {
-                // Loop through all iCal data found
-                for (var k in data) {
-                    if (data.hasOwnProperty(k)) {
-                        var ev = data[k];
-                        // Pick out the data relevant to us and create an object to hold it.
-                        var eventData = {
-                            summary: removeTags(ev.summary),
-                            location: removeTags(ev.location),
-                            description: removeTags(ev.description),
-                            start: ev.start,
-                            end: ev.end
-                        };
-                        // add the newly created object to an array for use later.
-                        eventList.push(eventData);
-                    }
+        var parent = this;
+
+        // Using the iCal library I pass the URL of where we want to get the data from.
+        ical.fromURL(URL, {}, function (err, data) {
+            // Loop through all iCal data found
+            for (var k in data) {
+                if (data.hasOwnProperty(k)) {
+                    var ev = data[k];
+                    // Pick out the data relevant to us and create an object to hold it.
+                    var eventData = {
+                        summary: removeTags(ev.summary),
+                        location: removeTags(ev.location),
+                        description: removeTags(ev.description),
+                        start: ev.start,
+                        end: ev.end
+                    };
+                    // add the newly created object to an array for use later.
+                    eventList.push(eventData);
                 }
-                // Check we have data
-                if (eventList.length > 0) {
-                    // Read slot data and parse out a usable date
-                    eventDate = getDateFromDaySlot(slotValue);
+            }
+            // Check we have data
+            if (eventList.length > 0) {
+                // Read slot data and parse out a usable date
+                eventDate = getDateFromDaySlot(slotValue);
 
-                    if (eventDate) {
-                        // initiate a new array, and this time fill it with events that fit between the two dates
-                        relevantEvent = getEventOnDate(eventDate, eventList);
+                if (eventDate) {
+                    // initiate a new array, and this time fill it with events that fit between the two dates
+                    relevantEvent = getEventOnDate(eventDate, eventList);
 
-                        if (relevantEvent) {
-                            // change state to description
-                            parent.handler.state = states.DESCRIPTION;
+                    if (relevantEvent) {
+                        // change state to description
+                        parent.handler.state = states.DESCRIPTION;
 
-                            // Create output for both Alexa and the content card
-                            var cardContent = "";
-                            if (slotValue == 'today' || slotValue == 'tomorrow' || slotValue == 'tonight') {
-                                output = utils.format(eventMessage, removeTags(relevantEvent.summary), slotValue);
-                            } else {
-                                output = utils.format(eventOnMessage, removeTags(relevantEvent.summary), slotValue);
-                            }
-                            //output += scheduledEventMessage;
-
-                            date = new Date(relevantEvent.start);
-                            // output += utils.format(eventSummary, "First", removeTags(relevantEvent.summary), relevantEvent.location, date.toDateString() + ".");
-                            // cardContent += utils.format(cardContentSummary, removeTags(relevantEvent.summary), removeTags(relevantEvent.location), date.toDateString()+ "\n\n");
-
-                            //output += eventNumberMoreInfoText;
-                            alexa.emit(':askWithCard', output, haveEventsReprompt, cardTitle, cardContent);
+                        // Create output for both Alexa and the content card
+                        var cardContent = "";
+                        if (slotValue == 'today' || slotValue == 'tomorrow' || slotValue == 'tonight') {
+                            output = utils.format(eventMessage, removeTags(relevantEvent.summary), slotValue);
                         } else {
-                            output = NoDataMessage;
-                            alexa.emit(':ask', output, output);
+                            output = utils.format(eventOnMessage, removeTags(relevantEvent.summary), slotValue);
                         }
-                    }
-                    else {
+                        alexa.emit(':askWithCard', output, haveEventsReprompt, cardTitle, cardContent);
+                    } else {
                         output = NoDataMessage;
                         alexa.emit(':ask', output, output);
                     }
@@ -173,11 +151,11 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
                     output = NoDataMessage;
                     alexa.emit(':ask', output, output);
                 }
-            });
-        }
-        else{
-            this.emit(":ask", "I'm sorry.  What day did you want me to look for dinner?", "I'm sorry.  What day did you want me to look for dinner?");
-        }
+            } else {
+                output = NoDataMessage;
+                alexa.emit(':ask', output, output);
+            }
+        })
     },
 
     'AMAZON.HelpIntent': function () {

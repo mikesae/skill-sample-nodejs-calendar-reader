@@ -19,8 +19,7 @@
       "name": "searchIntent",
       "slots": {
         "day": {
-          "name": "date",
-          "value": "monday"
+          "name": "date"
         }
       }
     }
