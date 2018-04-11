@@ -1,7 +1,7 @@
 {
   "name": "whats-for-dinner",
   "version": "1.0.0",
-  "description": "Alexa skill where you can find out what for dinner.",
+  "description": "Alexa skill that checks a dinner calendar when asked what's for dinner",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
