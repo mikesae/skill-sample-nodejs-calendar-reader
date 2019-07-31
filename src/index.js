@@ -12,46 +12,23 @@ var states = {
     SEARCHMODE: '_SEARCHMODE',
     DESCRIPTION: '_DESKMODE'
 };
-// local variable holding reference to the Alexa SDK object
-var alexa;
 
+var alexa;
 var APP_ID = "amzn1.ask.skill.cb3698a7-00e6-46ac-a136-16f357e59541";
 
-// URL to get the .ics from
 var URL = "https://calendar.google.com/calendar/ical/ia0ttobe2lkaaii29h3lghtobk%40group.calendar.google.com/private-65fc910066b6732f90e05878ec763bc2/basic.ics";
 
-// Skills name
 var skillName = "Chef";
-
-// Message when the skill is first called
 var welcomeMessage = "You can ask chef whats for dinner. Search for dinner by day, or say help. What would you like? ";
-
-// Message for help intent
 var HelpMessage = "Here are some things you can say: What's for dinner? What's for dinner on Friday? What's for dinner tomorrow?  What would you like to know?";
-
 var descriptionStateHelpMessage = "Here are some things you can say: Tell me more about dinner tonight";
-
-// Used when there is no data within a time period
-var NoDataMessage = "Sorry, there is no dinner planned for then. Would you like to search again?";
-
-// Used to tell user skill is closing
+var NoDataMessage = "Sorry there is no dinner planned for then. Would you like to search again?";
 var shutdownMessage = "Ok see you again soon.";
-
-// More info text
 var haveEventsReprompt = "Would you like to know more";
-
-// Error if a event number is out of range
 var eventOutOfRange = "Dinner number is out of range please choose another event";
-
-// Used when an event is asked for
 var descriptionMessage = "Here's the description ";
-
-// Used when an event is asked for
 var killSkillMessage = "Ok, great, see you next time.";
-
 var eventNumberMoreInfoText = "You can say the dinner number for more information.";
-
-// used for title on companion app
 var cardTitle = "Chef";
 
 // output for Alexa
@@ -102,7 +79,7 @@ const getEventMessage = (day, summary) => {
             break;
     }
     return result;
-};
+}
 
 // Create a new handler with a SEARCH state
 var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
@@ -251,9 +228,8 @@ exports.handler = function (event, context) {
     alexa.registerHandlers(newSessionHandlers, startSearchHandlers, descriptionHandlers);
     alexa.execute();
 };
-//======== HELPER FUNCTIONS ==============
 
-// Remove HTML tags from string
+
 function removeTags(str) {
     if (str) {
         return str.replace(/<(?:.|\n)*?>/gm, '');
