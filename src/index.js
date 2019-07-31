@@ -32,7 +32,7 @@ var HelpMessage = "Here are some things you can say: What's for dinner? What's f
 var descriptionStateHelpMessage = "Here are some things you can say: Tell me more about dinner tonight";
 
 // Used when there is no data within a time period
-var NoDataMessage = "Sorry there is no dinner planned for then. Would you like to search again?";
+var NoDataMessage = "Sorry, there is no dinner planned for then. Would you like to search again?";
 
 // Used to tell user skill is closing
 var shutdownMessage = "Ok see you again soon.";
